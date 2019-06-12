@@ -1,27 +1,27 @@
 import { Meteor } from 'meteor/meteor';
-import TransportNodeHid from '@ledgerhq/hw-transport-node-hid';
-// import 'babel-polyfill'
-import Qrl from '@theqrl/hw-app-qrl'
 
-Meteor.startup(() => {
-  // code to run on server at startup
-});
+import 'babel-polyfill'
+import Qrl from '@theqrl/hw-app-qrl/lib/Qrl.js'
+import TransportNodeHid from '@ledgerhq/hw-transport-node-hid-noevents';
 
 async function createTransport() {
-  var transport = null;
-  var qrl = await new Qrl(TransportNodeHid);
-  return qrl
+  var t = await TransportNodeHid.open();
+  return t
 }
 
 async function getVersion() {
-  var qrl = await createTransport();
-  return await qrl.get_version()
+  var transport = await createTransport();
+  var qrl = await new Qrl(transport);
+  return await qrl.get_version().then((r) => { 
+    console.log('returning to clinet: ', r);
+    transport.close();
+    return r
+  })
 }
 
 Meteor.methods({
   'test': () => {
-    getVersion();
-
-    return 'hello world'
+    var r = getVersion();
+    return r
   }
 })
